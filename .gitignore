@@ -1,2 +1,6 @@
 packages/
 ResponseTimes/logs.csv
+ResponseTimes/bin/
+ResponseTimes/obj/
+*.vsp
+.vs/
