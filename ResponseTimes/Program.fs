@@ -2,6 +2,7 @@
 open System
 open System.IO
 open Nessos.Streams
+open System.Diagnostics
 
 let removeEverythingAfterLast (separator : char) (input : string) =
     let parts = input.Split([| separator |], StringSplitOptions.RemoveEmptyEntries)
@@ -23,7 +24,7 @@ let cleanseRequestedUrl (url : string) =
     else url
 
 let averageResponseTimesByRequestedURL =
-    ParStream.choose(fun (logDetail:LogDetailsStruct) ->
+    ParStream.choose(fun (logDetail:LogDetails) ->
         match logDetail.ResponseTime with
         | Some responseTime when responseTime > 0 -> Some(responseTime, logDetail.HttpVerb, logDetail.RequestedURL)
         | _ -> None)
@@ -32,7 +33,8 @@ let averageResponseTimesByRequestedURL =
     >> ParStream.sortByDescending snd
 
 [<EntryPoint>]
-let main _ = 
+let main _ =     
+    let timer = Stopwatch.StartNew()
     let outputFile = "results.csv"
     use sw = new StreamWriter(outputFile)
     fprintfn sw "Method,Url,Avg ResponseTime (ms)"
@@ -42,6 +44,10 @@ let main _ =
     |> ParStream.iter(fun ((httpMethod, url), avgResponseTime) -> fprintfn sw "%s,%s,%.1f" httpMethod url avgResponseTime)
 
     sw.Close()
+    timer.Stop()
+    printfn "Total time %i milliseconds" timer.ElapsedMilliseconds
 
     printfn "Results saved to %s" outputFile
+    printfn "Press any key to continue..."
+    let input = Console.ReadLine()
     0 // return an integer exit code
